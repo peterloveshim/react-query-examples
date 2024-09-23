@@ -1,5 +1,13 @@
 ## 예제 설명
 
+```
+$ npm -v
+10.8.1
+
+$ node -v
+v20.16.0
+```
+
 ### algolia
 - 페이지 당 n개 게시글 페칭
 - useInfiniteQuery
@@ -49,3 +57,23 @@ useEffect(() => {
 - useQuery 바인딩 훅에 변수 값 전달(limit), useState 같이 사용
 - dehydrate : 서버에서 React Query의 상태를 클라이언트로 전송할 수 있는 형태로 만들기 위해 사용, 서버에서 미리 prefetch 한 데이터를 가져와 직렬화 한 후 클라이언트로 전송, 직렬화된 데이터는 DehydratedState 형태로 표현되며 클라이언트 측에서 hydrate함수를 통해 다시 React Query 상태로 변환됨
 - hydrate : 클라이언트 측에서 직렬화된 상태를 받아 이를 React Query의 상태로 변환, 이 과정은 서버에서 미리 가져온 데이터를 클라이언트의 쿼리 캐시에 적용하여 네트워크 요청 없이 데이터를 사용할 수 있게 함
+
+### nextjs-app-prefetching
+- [Advanced Server Rendering](https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr)
+- ***npm run build*** 에러 발생함
+- 임시 해결 방법으로 .env 파일 생성 후 아래 내용 추가, 데이터 fetch failed가 원인
+```
+NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+- useSuspenseQuery : 모든 쿼리를 미리 가져오기만 한다면 useQuery를 대체할 수 있음, 클라이언트에서 상태를 로드할 때  ```<Suspense>``` 를 사용할 수 있다.
+- queryClient.prefetchQuery(...)는 절대로 오류를 던지지 않음
+- dehydrate(...)는 실패한 쿼리가 아닌 성공한 쿼리만 포함
+- 실패한 쿼리는 클라이언트에서 다시 시도 되고 서번에서는 렌더링된 출력에는 전체 콘텐츠 대신 로딩 상태가 포함
+- 특별히 오류를 잡고 싶을 때는 queryClient.fetchQuery(...)를 대신 사용한다.
+```js
+try {
+  result = await queryClient.fetchQuery(...)
+} catch (error) {
+  // Handle the error, refer to your framework documentation
+}
+```
