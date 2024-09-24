@@ -44,6 +44,16 @@ function Example() {
       }
       return await response.json()
     },
+    onError: (error, variables, context) => {
+      // mutationFn 에서 catch한 Error를 이 위치에서 잡을 수 있음
+      console.log("error : ", error.message);
+
+      // 직전 입력값 get
+      console.log("variables : ", variables);
+
+      // 현재 위치에서 undefined
+      console.log("context : ", context);
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
   })
 
