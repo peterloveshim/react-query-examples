@@ -11,13 +11,16 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const text: string = req.body.text
 
     // sometimes it will fail, this will cause a regression on the UI
-
+    // 실패시
     if (Math.random() > 0.7) {
       res.status(500)
-      res.json({ message: 'Could not add item!' })
+      res.json({ message: 'Could not add item!' });
+
+      console.log("ERROR........")
       return
     }
 
+    // 성공시
     const newTodo = { id: Math.random().toString(), text: text.toUpperCase() }
     items.push(newTodo)
     res.json(newTodo)
