@@ -68,7 +68,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0
 - useSuspenseQuery : 모든 쿼리를 미리 가져오기만 한다면 useQuery를 대체할 수 있음, 클라이언트에서 상태를 로드할 때  ```<Suspense>``` 를 사용할 수 있다.
 - queryClient.prefetchQuery(...)는 절대로 오류를 던지지 않음
 - dehydrate(...)는 실패한 쿼리가 아닌 성공한 쿼리만 포함
-- 실패한 쿼리는 클라이언트에서 다시 시도 되고 서번에서는 렌더링된 출력에는 전체 콘텐츠 대신 로딩 상태가 포함
+- 실패한 쿼리는 클라이언트에서 다시 시도 되고 서버에서는 렌더링된 출력에는 전체 콘텐츠 대신 로딩 상태가 포함
 - 특별히 오류를 잡고 싶을 때는 queryClient.fetchQuery(...)를 대신 사용한다.
 ```js
 try {
@@ -77,3 +77,11 @@ try {
   // Handle the error, refer to your framework documentation
 }
 ```
+- [1]페이지 최초 진입시, [2]페이지 새로 고침시 de/hydrate 됨(서버단에서 queryFn call 한 데이터를 브라우저에서 사용)
+- 브라우저에서 staleTime 초과시 queryFn call 하고 해당 결과 데이터가 브라우저에 업데이트 된다.
+- 서버단에서는 staleTime 이 무조건 30초가 기본인 것으로 보이고 옵션 설정 못찾음.
+- [1], [2] 이외에는 de/hydrate 이 되지 않는 것으보임(브라우저가 서버단에서의 queryFn 결과값을 출력하지 않는다)
+
+### nextjs-suspense-streaming
+- 데이터 페치 지연 처리 예
+- useSuspenseQuery + Suspense
