@@ -13,24 +13,31 @@ function getBaseURL() {
   }
   return 'http://localhost:3000'
 }
-const baseUrl = getBaseURL()
+
+const baseUrl = getBaseURL();
+
 function useWaitQuery(props: { wait: number }) {
+
   const query = useSuspenseQuery({
     queryKey: ['wait', props.wait],
     queryFn: async () => {
       const path = `/api/wait?wait=${props.wait}`
       const url = baseUrl + path
+      console.log("url : ", url);
 
       const res: string = await (
         await fetch(url, {
           cache: 'no-store',
         })
       ).json()
-      return res
+      return res;
     },
   })
 
-  return [query.data as string, query] as const
+  // as const 타입 생성을 생략할 수 있다.
+  // readonly
+  // 배열의 경우 읽기 전용 값의 튜플로 변경(배열의 순서가 정해져 있음)
+  return [query.data as string, query] as const;
 }
 
 function MyComponent(props: { wait: number }) {
