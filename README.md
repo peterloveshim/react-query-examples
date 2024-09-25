@@ -9,7 +9,7 @@ v20.16.0
 ```
 
 ### algolia
-- 페이지 당 n개 게시글 페칭
+- **페이지 당 n개 게시글 페칭**
 - useInfiniteQuery
 
 ### auto-refetching
