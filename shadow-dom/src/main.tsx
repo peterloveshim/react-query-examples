@@ -9,6 +9,8 @@ const appRoot = document.getElementById('root')
 
 if (appRoot) {
   const queryClient = new QueryClient()
+  // mode: 'open' => 메인 페이지 맥락에서 작성된 JavaScript를 사용하여 shadow DOM에 접근할 수 있음
+  // mode: 'closed' => 외부로부터 shadow DOM에 접근할 수 없음
   const shadowRoot = appRoot.attachShadow({ mode: 'open' })
   const root = ReactDOM.createRoot(shadowRoot)
 

@@ -142,9 +142,7 @@ function App() {
           <Todos
             initialFilter={view}
             setEditingIndex={setEditingIndex}
-            onRemove={() => {
-              setViews((old) => [...old, ''])
-            }}
+            onRemove={() => setViews([])}
           />
           <br />
         </div>
@@ -174,9 +172,11 @@ function App() {
 function Todos({
   initialFilter = '',
   setEditingIndex,
+  onRemove
 }: {
   initialFilter: string
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>
+  onRemove: () => void
 }) {
   const [filter, setFilter] = React.useState(initialFilter)
 
@@ -192,6 +192,7 @@ function Todos({
           Filter:{' '}
           <input value={filter} onChange={(e) => setFilter(e.target.value)} />
         </label>
+        <button onClick={() => onRemove()}>Remove All</button>
       </div>
       {status === 'pending' ? (
         <span>Loading... (Attempt: {failureCount + 1})</span>
@@ -245,17 +246,17 @@ function EditTodo({
     queryFn: () => fetchTodoById({ id: editingIndex }),
   })
 
-  const [todo, setTodo] = React.useState(data || {})
+  const [todo, setTodo] = React.useState(data || { id: -1, name: "", notes: "" })
 
   React.useEffect(() => {
     if (editingIndex !== null && data) {
       setTodo(data)
     } else {
-      setTodo({})
+      setTodo({ id: -1, name: "", notes: "" })
     }
   }, [data, editingIndex])
 
-  const saveMutation = useMutation({
+  const saveMutation = useMutation<Todo, Error, Todo>({
     mutationFn: patchTodo,
     onSuccess: (data) => {
       // Update `todos` and the individual todo queries when this mutation succeeds
@@ -265,7 +266,10 @@ function EditTodo({
   })
 
   const onSave = () => {
-    saveMutation.mutate(todo)
+    console.log("onSave todo : ", todo);
+    if(todo) {
+      saveMutation.mutate(todo)
+    }
   }
 
   const disableEditSave =
@@ -277,8 +281,7 @@ function EditTodo({
         {data ? (
           <>
             <button onClick={() => setEditingIndex(null)}>Back</button> Editing
-            Todo "{data.name}" (#
-            {editingIndex})
+            Todo "{data.name}" (#{editingIndex})
           </>
         ) : null}
       </div>
@@ -294,10 +297,7 @@ function EditTodo({
             Name:{' '}
             <input
               value={todo.name}
-              onChange={(e) =>
-                e.persist() ||
-                setTodo((old) => ({ ...old, name: e.target.value }))
-              }
+              onChange={(e) => setTodo((old) => ({ ...old, name: e.target.value }))}
               disabled={disableEditSave}
             />
           </label>
@@ -305,10 +305,7 @@ function EditTodo({
             Notes:{' '}
             <input
               value={todo.notes}
-              onChange={(e) =>
-                e.persist() ||
-                setTodo((old) => ({ ...old, notes: e.target.value }))
-              }
+              onChange={(e) => setTodo((old) => ({ ...old, notes: e.target.value }))}
               disabled={disableEditSave}
             />
           </label>
@@ -376,11 +373,18 @@ function AddTodo() {
   )
 }
 
-function fetchTodos({ signal, queryKey: [, { filter }] }): Promise<Todos> {
+function fetchTodos({ 
+  signal, 
+  queryKey: [, { filter }] 
+}:{ 
+  signal: AbortSignal;
+  queryKey: [any, { filter: string }] 
+}): Promise<Todos> {
   console.info('fetchTodos', { filter })
 
   if (signal) {
     signal.addEventListener('abort', () => {
+      // 아래 Promise return 전에 동일한 키로 재요청시 abort 이벤트 발생
       console.info('cancelled', filter)
     })
   }
@@ -393,6 +397,8 @@ function fetchTodos({ signal, queryKey: [, { filter }] }): Promise<Todos> {
             new Error(JSON.stringify({ fetchTodos: { filter } }, null, 2)),
           )
         }
+
+        console.log('resolve 됨')
         resolve(list.filter((d) => d.name.includes(filter)))
       },
       queryTimeMin + Math.random() * (queryTimeMax - queryTimeMin),
@@ -410,7 +416,9 @@ function fetchTodoById({ id }: { id: number }): Promise<Todo> {
             new Error(JSON.stringify({ fetchTodoById: { id } }, null, 2)),
           )
         }
-        resolve(list.find((d) => d.id === id))
+        const selectedTodo = list.find((d) => d.id === id)
+        const result = selectedTodo ?? { id: 0, name: '', notes: ''}
+        resolve(result)
       },
       queryTimeMin + Math.random() * (queryTimeMax - queryTimeMin),
     )
@@ -436,7 +444,7 @@ function postTodo({ name, notes }: Omit<Todo, 'id'>) {
   })
 }
 
-function patchTodo(todo?: Todo): Promise<Todo> {
+function patchTodo(todo: Todo): Promise<Todo> {
   console.info('patchTodo', todo)
   return new Promise((resolve, reject) => {
     setTimeout(
@@ -445,9 +453,11 @@ function patchTodo(todo?: Todo): Promise<Todo> {
           return reject(new Error(JSON.stringify({ patchTodo: todo }, null, 2)))
         }
         list = list.map((d) => {
+          // 수정된 todo로 변경
           if (d.id === todo.id) {
             return todo
           }
+          
           return d
         })
         resolve(todo)

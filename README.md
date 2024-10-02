@@ -139,3 +139,71 @@ v20.16.0
   - 데이터 fetch가 완료되면 새 데이터로 update됨
 - useQuery 리턴 > isPlaceholderData
   - 현재 데이터가 PlaceholderData 인지 여부
+  
+### playground
+- 데이터 추가, 삭제
+- 하위 컴포넌트간 데이터 변경
+- queryClient.setDefaultOptions
+  - staleTime, gcTime 설정 변경
+- queryClient.invalidateQueries(/* 쿼리키 X */)
+  - 모든 reactquery data refetch
+- queryFn 의 fetch 함수에 변수를 전달 하기 위해서 queryKey를 사용
+  ```js
+  // useQuery hook
+  const { status, data, isFetching, error, failureCount, refetch } = useQuery({
+    queryKey: ['todos', { filter }],
+    queryFn: fetchTodos,
+  })
+
+  ...
+
+  // fetchTodos 에 변수 전달
+  function fetchTodos({ signal, queryKey: [key, { filter }] }) {
+    return new Promise((resolve, reject) => {
+      resolve(list.filter((d) => d.name.includes(filter)))
+    })
+  } 
+  ```
+- queryFn에서 전달하는 signal: AbortSignal
+  - **동일한 요청을 여러번 클릭 등으로 이벤트 발생시 이전 이벤트 중단 요청 처리**
+  - 비동기 웹 요청 중단 기능(fetch, axios 가능)
+  - 모든 요청보다는 대용량 요청 처리에 적절히 사용
+  - 동일 키 요청시 이전 요청이 완료 되지 않을 경우 abort 이벤트 발생함(default)
+  - 기본적으로 fetch 나 axios 요청시 옵션에 signal 설정하면 unmount의 경우 자동으로 중단 요청됨
+  - 현재 소스 기준에서는 이전 요청이 중단되지 않고 abort 이벤트 캐치만 할 수 있음
+    ```js
+    queryFn: async ({ signal }) => {
+      const todosResponse = await fetch('/todos', {
+        // Pass the signal to one fetch
+        signal,
+      })
+      const todos = await todosResponse.json()
+    }
+    ```
+  - [참조] [MDN Web Docs - AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+  - [참조] [Query Cancellation](https://tanstack.com/query/v4/docs/framework/react/guides/query-cancellation)
+
+### prefetching
+- 데이터 목록 각 컨텐츠 mouseEnter 시 데이터 prefetch 함
+- 컨텐츠 상세보기 페이지 이동시 미리 prefetch한 데이터를 우선 렌더링 후 백그라운드에서 재요청(refetchOnWindowFocus: true) 후 업데이트
+- **데이터 목록에서 특정 데이터 상세 보기시 유용**
+- queryClient.getQueryData
+  - *QueryCache 데이터를 subscription 하지 않고 해당 컴포넌트가 렌더링될 때 한번만 데이터를 읽는다.*
+
+### react-router
+- queryClient.ensureQueryData
+  - 현재 있는 쿼리 캐시를 가져온다. 없으면 queryClient.fetchQuery를 호출하고 해당 결과값 리턴
+- queryClient.fetchQuery
+  - 비동기 함수로 fetch 하고 cache a query 할 때 사용
+  - data를 resolve 하거나 에러를 던진다. 그래서 직접 try - catch 감싸서 에러 핸들링을 할 수 있음
+  - fetch 결과값의 리턴(data resolve)이 필요없다면 prefetchQuery를 사용한다.
+
+### rick-morty
+- **공통 fetch 함수**
+- 에피소드 목록 및 각 에피소드 상세(등장 인물 포함)
+- 인물 목록 및 각 인물 상세(출연한 에피소드 포함)
+
+### shadow-dom
+- [shadow DOM](https://developer.mozilla.org/ko/docs/Web/API/Web_components/Using_shadow_DOM)
+- ReactQueryDevtools 의 캡슐화 예제
+- global css에 영향 받지 않음, 설정에 따라 해당 DOM에 접근 가능

@@ -24,7 +24,7 @@ export default function Episodes() {
         <article key={episode.id}>
           <Link component={RouterLink} to={`/episodes/${episode.id}`}>
             <Typography variant="h6">
-              {episode.episode} - {episode.name} <em>{episode.airDate}</em>
+              {episode.episode} - {episode.name} <em>{episode.air_date}</em>
             </Typography>
           </Link>
         </article>
