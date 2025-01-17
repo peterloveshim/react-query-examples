@@ -42,7 +42,7 @@ function Example() {
     initialPageParam: 0,
     getPreviousPageParam: (firstPage) => firstPage.previousId ?? undefined,
     getNextPageParam: (lastPage) => lastPage.nextId ?? undefined,
-    maxPages: 3, // 총 캐싱되는 페이지 개수(페이지당 콘텐츠 개수 * 페이지 개수)
+    maxPages: 3, // 총 캐싱되는 페이지 개수(페이지당 콘텐츠 개수 * 페이지 개수), 마지막 페이지 기준으로 됨
   })
 
   return (
